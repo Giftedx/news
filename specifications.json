@@ -1,0 +1,22 @@
+[
+  {
+    "fileName": "main-overview.mdc",
+    "description": "Complete system overview including the architecture, core components, and interactions between newspaper download, storage, and email distribution subsystems"
+  },
+  {
+    "fileName": "download-workflow.mdc",
+    "description": "Detailed documentation of the newspaper acquisition workflow including authentication strategies, download mechanisms, and content validation algorithms"
+  },
+  {
+    "fileName": "storage-architecture.mdc",
+    "description": "Documentation of the dual-provider storage system, archival logic, and data retention policies for managing the rolling 7-day newspaper archive"
+  },
+  {
+    "fileName": "email-distribution.mdc",
+    "description": "Technical details of the email distribution system including template generation, preview thumbnail creation, and archive link management"
+  },
+  {
+    "fileName": "data-flow.mdc",
+    "description": "End-to-end data flow documentation showing how newspaper content moves through download, storage, preview generation, and email distribution stages"
+  }
+]

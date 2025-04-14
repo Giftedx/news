@@ -1,0 +1,47 @@
+---
+description: Defines storage architecture patterns for managing rolling 7-day newspaper archives using dual cloud providers
+globs: /storage/**/*.py,/archive/**/*.py,/**/storage.py
+alwaysApply: false
+---
+
+
+# storage-architecture
+
+The storage architecture implements a dual-provider approach for managing the newspaper archive system:
+
+## Primary Storage Components
+
+### Cloud Provider Strategy (Importance: 95)
+- Primary: Cloudflare R2 storage implementation
+- Fallback: AWS S3 backup storage
+- Automatic provider failover mechanism
+
+### Archive Management (Importance: 90)
+- Rolling 7-day retention window
+- Date-based file organization using YYYY-MM-DD format
+- Automatic purging of newspapers older than 7 days
+
+### Content Type Handling (Importance: 85)
+- Newspaper format detection (PDF/HTML)
+- MIME type assignment for public access
+- Provider-specific URL construction for CDN integration
+
+## Key File Paths
+/storage.py - Main storage provider implementation
+/website.py - Content acquisition and format detection
+
+## Storage Workflows
+
+### Archive Lifecycle (Importance: 88)
+1. New newspaper ingestion
+2. Format detection and MIME typing
+3. Primary storage upload with fallback
+4. Retention policy enforcement
+5. Expired content removal
+
+### URL Generation (Importance: 82)
+- Provider-specific public URL construction
+- CDN prefix integration support
+- Temporal link generation for archive access
+
+$END$

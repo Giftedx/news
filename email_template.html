@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Newspaper - {{ date }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            background-color: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .header p {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-top: 0;
+        }
+        .thumbnail {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .thumbnail img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .button-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #3498db;
+            color: #ffffff !important; /* Ensure text is white */
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .past-papers {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .past-papers h2 {
+            color: #34495e;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .past-papers ul {
+            list-style: none;
+            padding: 0;
+        }
+        .past-papers li {
+            margin-bottom: 10px;
+        }
+        .past-papers a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .past-papers a:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Daily Newspaper</h1>
+            <p>Edition for {{ date }}</p>
+        </div>
+        
+        {% if thumbnail_cid %}
+        <div class="thumbnail">
+            <img src="cid:{{ thumbnail_cid }}" alt="Newspaper Thumbnail">
+        </div>
+        {% endif %}
+        
+        <div class="button-container">
+            <a href="{{ today_paper_url }}" class="button">Download Today's Paper</a>
+        </div>
+        
+        {% if past_papers %}
+        <div class="past-papers">
+            <h2>Past Week's Editions:</h2>
+            <ul>
+                {% for paper_date, paper_url in past_papers %}
+                <li><a href="{{ paper_url }}">{{ paper_date }} Edition</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <div class="footer">
+            <p>This email was automatically generated. Please do not reply.</p>
+            <p>&copy; {{ current_year }} Newspaper Automation Service</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+---
+description: Email distribution system analysis for automated newspaper delivery project
+globs: **/email*.py,**/email*.html,**/template*.html,**/mail*.py
+alwaysApply: false
+---
+
+
+# email-distribution
+
+## Core Distribution Logic
+
+### Email Template System
+- Custom templating for newspaper-specific content layout
+- Integration of current day's paper preview thumbnail
+- Archive link organization for past 7 days' papers
+- Structured presentation of publication date and edition info
+
+Importance: 85 - Critical business workflow for content delivery
+
+### Preview Generation
+- Automated thumbnail creation of newspaper front page
+- Content-ID mapping for inline preview images
+- Fallback handling when thumbnail generation fails
+
+Importance: 75 - Key feature for reader engagement
+
+### Archive Management
+- Rolling 7-day archive link system
+- Date-based organization of historical access
+- Temporal linking structure for past editions
+- Automatic expiration of links older than 7 days
+
+Importance: 90 - Core business requirement for content access
+
+### Distribution Format
+- Dual-format delivery system (HTML + plaintext)
+- Newspaper-specific content structuring
+- Provider-agnostic email delivery (SendGrid/Mailgun support)
+- Template fallback system
+
+Importance: 80 - Essential for reliable content delivery
+
+Relevant Files:
+- email_sender.py
+- email_template.html
+
+$END$

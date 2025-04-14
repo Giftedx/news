@@ -1,0 +1,60 @@
+
+START SPECIFICATION:
+---
+description: Creates a high-level overview of cloud-based daily newspaper email distribution systems, focusing on core business logic organization and automated delivery workflows
+globs: *.py,*.ipynb,*.html
+alwaysApply: false
+---
+
+
+# main-overview
+
+## Development Guidelines
+
+- Only modify code directly relevant to the specific request. Avoid changing unrelated functionality.
+- Never replace code with placeholders like `# ... rest of the processing ...`. Always include complete code.
+- Break problems into smaller steps. Think through each step separately before implementing.
+- Always provide a complete PLAN with REASONING based on evidence from code and logs before making changes.
+- Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
+
+
+## Core System Purpose
+Cloud-based automated system for downloading and distributing daily newspaper content via email while maintaining a rolling 7-day archive, designed to operate entirely within free-tier service limits.
+
+## Primary Business Components
+
+### Newspaper Content Management [Score: 95]
+- Automated acquisition system for downloading daily newspaper editions
+- Rolling 7-day archive window implementation
+- Intelligent login detection for handling subscription access
+- Format detection between PDF and HTML newspapers
+
+### Distribution Pipeline [Score: 90]
+- Daily email assembly incorporating:
+  - Current newspaper edition
+  - Archive access links
+  - Front page thumbnail previews
+- Multi-format email delivery (HTML + plaintext)
+- Automated cleanup of expired editions
+
+### Archive Management [Score: 85]
+- Date-based organization system
+- 7-day retention policy enforcement
+- Temporal linking system for archive access
+- Cloud storage integration with zero-cost providers
+
+### Critical Files
+- project.ipynb: Core newspaper acquisition logic
+- storage.py: Cloud storage management
+- email_sender.py: Distribution workflow
+- main.py: Pipeline orchestration
+
+## Business Rules
+- Strict 7-day archive window
+- Zero-cost infrastructure requirement
+- Complete automation of daily operations
+- Mandatory preview generation
+- Date-based naming convention (YYYY-MM-DD)
+
+$END$
+END SPECIFICATION

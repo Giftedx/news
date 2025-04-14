@@ -1,0 +1,45 @@
+---
+description: Specification for newspaper download and authentication workflows in automated distribution system
+globs: **/*.py,**/*.ipynb
+alwaysApply: false
+---
+
+
+# download-workflow
+
+The newspaper acquisition workflow implements specialized business logic for automated content retrieval from subscription-based newspaper sites:
+
+## Authentication Strategy (Importance: 95)
+- Two-phase authentication approach:
+  1. Primary: Form-based login with credential management
+  2. Fallback: Browser automation for JavaScript-heavy paywalls
+- Smart session validation through multiple indicators:
+  - Logout link presence detection
+  - Welcome message username verification
+  - Cookie-based session persistence
+
+## Download Mechanism (Importance: 90)
+- Dual-path content retrieval:
+  1. Direct PDF/HTML download via authenticated requests
+  2. Full page capture fallback for problematic sources
+- Intelligent newspaper link detection:
+  - Date-based link prioritization matching current date
+  - Keyword matching (latest/current/today)
+  - Configurable CSS selector overrides
+
+## Content Validation (Importance: 85)
+- Format-specific validation:
+  - PDF structure verification
+  - HTML completeness checking
+  - Front page presence confirmation
+- Archive integrity enforcement:
+  - Date sequence validation
+  - Content completeness verification
+  - MIME type conformance checks
+
+## Relevant Files:
+- website.py: Authentication and download orchestration
+- storage.py: Content persistence and validation
+- project.ipynb: Core download workflow implementation
+
+$END$

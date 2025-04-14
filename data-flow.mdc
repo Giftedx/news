@@ -1,0 +1,51 @@
+---
+description: Used for analyzing data movement and transformation patterns in newspaper processing and distribution systems
+globs: *.py,*.ipynb
+alwaysApply: false
+---
+
+
+# Data-Flow
+
+Core Data Pipeline: Newspaper Content Processing
+Importance Score: 95
+
+1. Content Acquisition Flow
+- Newspaper download from subscription websites
+- Storage in rolling 7-day cloud archive
+- Automatic removal of papers older than 7 days
+
+2. Content Processing Flow
+- PDF/HTML format detection and handling
+- Front page thumbnail generation
+- Public URL generation for archive access
+
+3. Distribution Flow 
+- Email assembly with current newspaper
+- Integration of archive access links
+- Thumbnail embedding in email templates
+
+Key Data Transformations:
+1. Raw Newspaper → Cloud Storage
+   - Format detection (PDF/HTML)
+   - MIME type assignment
+   - Provider-specific URL construction
+
+2. Stored Content → Email Distribution
+   - Thumbnail generation from front page
+   - HTML/plaintext email templating
+   - Archive link generation
+
+File Organization:
+/project.ipynb - Main newspaper processing logic
+/website.py - Content acquisition flows
+/storage.py - Cloud storage management
+/email_sender.py - Distribution pipeline
+/email_template.html - Email formatting
+
+Data Retention Rules:
+- 7-day rolling window retention
+- Date-based naming (YYYY-MM-DD)
+- Automatic purging of expired content
+
+$END$
