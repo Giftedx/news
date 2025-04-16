@@ -4,12 +4,10 @@ Website interaction module for newspaper downloader
 Handles login to newspaper website and downloading the daily newspaper.
 """
 
-import logging
 import os
-import time
+import logging
 import requests
-from requests.exceptions import RequestException
-from datetime import datetime
+from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import config
 
@@ -19,7 +17,6 @@ try:
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
-    # Define dummy exceptions if Playwright is not installed to avoid NameErrors later
     class PlaywrightTimeoutError(Exception):
         pass
     class PlaywrightError(Exception):

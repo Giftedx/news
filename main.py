@@ -1,6 +1,9 @@
 import os
+
 import logging
+import json
 from datetime import date, timedelta, datetime
+import time
 
 # Import project modules
 import website
@@ -27,6 +30,66 @@ RETENTION_DAYS = config.config.get(('general', 'retention_days'), 7)
 DATE_FORMAT = config.config.get(('general', 'date_format'), '%Y-%m-%d')
 FILENAME_TEMPLATE = "{date}_newspaper.{format}" # Use format placeholder
 THUMBNAIL_FILENAME_TEMPLATE = "{date}_thumbnail.jpg"
+
+STATUS_FILE = 'pipeline_status.json'
+
+# --- Enhanced Status Update ---
+def update_status(step, status, message=None, percent=None, eta=None, explainer=None):
+    """
+    Enhanced status update for UI polling.
+    percent: int (0-100), progress percent
+    eta: str, estimated time remaining (e.g. 'about 1 minute')
+    explainer: str, optional friendly explanation for slow steps
+    """
+    status_obj = {
+        'step': step,
+        'status': status,
+        'message': message or '',
+        'timestamp': datetime.now().isoformat(),
+        'percent': percent,
+        'eta': eta,
+        'explainer': explainer
+    }
+    try:
+        with open(STATUS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(status_obj, f)
+    except Exception as e:
+        logger.warning(f"Could not write status file: {e}")
+
+# --- Last 7 Days At A Glance ---
+def get_last_7_days_status():
+    today = date.today()
+    days = [today - timedelta(days=i) for i in range(7)]
+    status = []
+    for d in reversed(days):
+        fname_pdf = f"{d.strftime(DATE_FORMAT)}_newspaper.pdf"
+        fname_html = f"{d.strftime(DATE_FORMAT)}_newspaper.html"
+        found = False
+        for f in storage.list_storage_files():
+            if f == fname_pdf or f == fname_html:
+                found = True
+                break
+        status.append({'date': d.strftime(DATE_FORMAT), 'status': 'ready' if found else 'missing'})
+    return status
+
+def update_status(step, status, message=None):
+    """
+    Write the current pipeline step and status to a status file for UI polling.
+    step: str, e.g. 'download', 'upload', 'thumbnail', 'email', 'draft'
+    status: str, one of 'pending', 'in_progress', 'success', 'error'
+    message: str, friendly message for the user
+    """
+    status_obj = {
+        'step': step,
+        'status': status,
+        'message': message or '',
+        'timestamp': datetime.now().isoformat()
+    }
+    try:
+        with open(STATUS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(status_obj, f)
+    except Exception as e:
+        logger.warning(f"Could not write status file: {e}")
 
 # --- Helper Functions ---
 
@@ -149,71 +212,112 @@ def cleanup_old_files(target_date: date, days_to_keep=None, dry_run: bool = Fals
 
 # --- Main Execution Logic ---
 def main(target_date_str: str | None = None, dry_run: bool = False, force_download: bool = False):
-    """Main function to run the newspaper downloader for a specific date."""
     try:
+        update_status('start', 'in_progress', 'Starting the daily newspaper process...', percent=0, eta='about 2-3 minutes')
         # Step 1: Validate configuration
-        logger.info("Step 1: Validating configuration...")
+        update_status('config', 'in_progress', 'Checking your settings...', percent=5)
         if not config.load():
+            update_status('config', 'error', 'Configuration validation failed. Please check your settings.', percent=0)
             logger.critical("Configuration validation failed. Exiting.")
             return False
+        update_status('config', 'success', 'Settings look good!', percent=10)
 
         # Step 2: Determine target date
         target_date = date.today() if not target_date_str else datetime.strptime(target_date_str, '%Y-%m-%d').date()
-        logger.info("Step 2: Target date determined as %s", target_date)
+        update_status('date', 'success', f"Preparing your newspaper for {target_date.strftime('%A, %B %d, %Y')}", percent=15)
 
-        # Step 3: Download newspaper
-        logger.info("Step 3: Downloading newspaper for %s...", target_date)
-        newspaper_filename = f"{target_date.strftime('%Y-%m-%d')}_newspaper.pdf"
-        newspaper_path = os.path.join(config.config.get(('paths', 'download_dir')), newspaper_filename)
-        download_success, file_format = website.login_and_download(
-            base_url=config.config.get(('newspaper', 'url')),
-            username=config.config.get(('newspaper', 'username')),
-            password=config.config.get(('newspaper', 'password')),
-            save_path=newspaper_path,
-            target_date=target_date_str,
-            dry_run=dry_run,
-            force_download=force_download
-        )
+        # Step 3: Ensure download directory exists
+        download_dir = config.config.get(('paths', 'download_dir'), 'downloads')
+        os.makedirs(download_dir, exist_ok=True)
+
+        # Step 4: Download newspaper
+        update_status('download', 'in_progress', 'Downloading today\'s newspaper...', percent=20, eta='about 1 minute')
+        formats = ['pdf', 'html']
+        newspaper_path = None
+        newspaper_filename = None
+        file_format = None
+        download_success = False
+        download_start = time.time()
+        for fmt in formats:
+            candidate_filename = f"{target_date.strftime('%Y-%m-%d')}_newspaper.{fmt}"
+            candidate_path = os.path.join(download_dir, candidate_filename)
+            success, detected_format = website.login_and_download(
+                base_url=config.config.get(('newspaper', 'url')),
+                username=config.config.get(('newspaper', 'username')),
+                password=config.config.get(('newspaper', 'password')),
+                save_path=candidate_path,
+                target_date=target_date_str,
+                dry_run=dry_run,
+                force_download=force_download
+            )
+            if success:
+                newspaper_path = candidate_path
+                newspaper_filename = candidate_filename
+                file_format = fmt
+                download_success = True
+                break
+            # If download is slow, show explainer
+            if time.time() - download_start > 60:
+                update_status('download', 'in_progress', 'Still downloading... This can take a few minutes if the newspaper site is busy.', percent=25, eta='a few more minutes', explainer='No action needed. Sometimes the newspaper site is slow. We\'ll keep trying.')
         if not download_success:
+            update_status('download', 'error', 'Could not download today\'s newspaper. Please check your subscription or try again later.', percent=0)
             logger.error("Failed to download newspaper for %s. Exiting.", target_date)
+            email_sender.send_alert_email(
+                subject='Newspaper Download Failed',
+                message=f'Could not download newspaper for {target_date}.',
+                dry_run=dry_run
+            )
+            return False
+        update_status('download', 'success', 'Downloaded today\'s newspaper!', percent=35)
+
+        # Step 5: Upload to cloud storage
+        update_status('upload', 'in_progress', 'Uploading your newspaper to the cloud...', percent=40, eta='about 30 seconds')
+        try:
+            storage.upload_to_storage(newspaper_path, newspaper_filename, dry_run=dry_run)
+            update_status('upload', 'success', 'Upload complete!', percent=55)
+        except Exception as e:
+            update_status('upload', 'error', 'Upload failed. Please check your cloud storage settings.', percent=0)
+            logger.exception('Upload failed: %s', e)
             return False
 
-        logger.info("Newspaper downloaded successfully: %s", newspaper_path)
+        # Step 6: Generate thumbnail
+        update_status('thumbnail', 'in_progress', 'Creating a preview image of the front page...', percent=60, eta='about 20 seconds')
+        try:
+            from thumbnail import generate_thumbnail
+            thumbnail_path = generate_thumbnail(newspaper_path)
+            update_status('thumbnail', 'success', 'Preview image created!', percent=75)
+        except Exception as e:
+            update_status('thumbnail', 'error', 'Could not create a preview image. The email will not include a thumbnail.', percent=0)
+            logger.warning('Thumbnail generation failed: %s', e)
+            thumbnail_path = None
 
-        # Step 4: Get Paper Links (Today's and Past)
-        logger.info("Step 4: Retrieving paper links from storage for %s...", target_date)
-        today_paper_url = storage.get_file_url(newspaper_filename)
-        if not today_paper_url:
-            logger.error("Could not get URL for newspaper file: %s. Exiting.", newspaper_filename)
+        # Step 7: Update email template and prepare draft
+        update_status('email', 'in_progress', 'Updating your email with today\'s newspaper and preview...', percent=80, eta='about 30 seconds')
+        try:
+            past_papers = get_past_papers_from_storage(target_date)
+            email_sender.send_email(
+                target_date=target_date,
+                today_paper_url=storage.get_file_url(newspaper_filename),
+                past_papers=past_papers,
+                thumbnail_path=thumbnail_path,
+                dry_run=dry_run
+            )
+            update_status('email', 'success', 'Email is ready to send! Check your drafts in Gmail.', percent=95)
+        except Exception as e:
+            update_status('email', 'error', 'Could not update the email. Please check your email settings.', percent=0)
+            logger.exception('Email update failed: %s', e)
             return False
-        logger.info("Retrieved URL for %s: %s", newspaper_filename, today_paper_url)
 
-        past_papers_links = storage.get_past_papers_from_storage(target_date=target_date, days=config.config.get(('general', 'retention_days')))
+        update_status('done', 'success', 'All done! Your newspaper is ready and your email draft is waiting.', percent=100)
 
-        # Step 5: Send Email
-        logger.info("Step 5: Sending email...")
-        email_success = email_sender.send_email(
-            target_date=target_date,
-            today_paper_url=today_paper_url,
-            past_papers=past_papers_links,
-            thumbnail_path=None, # Assuming thumbnail generation is optional
-            dry_run=dry_run
-        )
-        if not email_success:
-            logger.error("Failed to send email for %s. Exiting.", target_date)
-            return False
-
-        logger.info("Email sent successfully for %s.", target_date)
+        # After a successful week, prompt for automation
+        last_7 = get_last_7_days_status()
+        if all(day['status'] == 'ready' for day in last_7):
+            logger.info('Prompt: Would you like to automate this process to run every day? You can stop it anytime.')
         return True
-
-    except ValueError as e:
-        logger.error("Value error occurred: %s", e)
-        return False
-    except AttributeError as e:
-        logger.error("Attribute error occurred: %s", e)
-        return False
     except Exception as e:
-        logger.exception("An unexpected error occurred in the main pipeline: %s", e)
+        update_status('done', 'error', 'Something went wrong. Please check the logs for details.', percent=0)
+        logger.exception('Pipeline failed: %s', e)
         return False
 
 # This block is mostly for testing/standalone runs, main execution is via run_newspaper.py
@@ -224,3 +328,6 @@ if __name__ == "__main__":
     success = main(target_date_str=today_date_str, dry_run=False) # Corrected: Pass target_date_str
     if not success:
         exit(1)
+
+    # Reminder: Respect website Terms of Service and rate limiting
+    logger.info("Reminder: Ensure compliance with the newspaper website's Terms of Service. Avoid excessive requests. Consider adding delays if needed.")

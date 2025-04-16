@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+the #!/usr/bin/env python3
 """
 Thumbnail generation module
 Uses pdf2image (requires poppler) to create a PNG thumbnail from the first page of a PDF.
